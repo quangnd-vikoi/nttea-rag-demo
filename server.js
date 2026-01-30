@@ -51,7 +51,7 @@ server.listen(PORT, () => {
   console.log(`  http://localhost:${PORT}/              (index.html)`);
   console.log(`  http://localhost:${PORT}/test-standalone.html`);
   console.log(`  http://localhost:${PORT}/test-easyauth.html`);
-  console.log(`  http://localhost:${PORT}/test-external.html`);
+  console.log(`  http://localhost:${PORT}/test-shared-msal.html`);
   console.log('');
   console.log('Press Ctrl+C to stop');
 });

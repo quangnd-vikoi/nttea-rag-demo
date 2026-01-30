@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Test Shared MSAL (SSO)</title>
+		<script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+		<style>
+			body { font-family: system-ui, sans-serif; background: #f5f5f5; padding: 20px; }
+			.card { background: white; padding: 20px; border-radius: 8px; max-width: 900px; margin: 0 auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+			h1 { color: #333; font-size: 1.5rem; }
+			.badge { display: inline-block; background: #9c27b0; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; margin-bottom: 10px; }
+			.status { padding: 12px; border-radius: 6px; margin: 15px 0; font-size: 14px; }
+			.status-success { background: #e8f5e9; color: #2e7d32; }
+			.status-warning { background: #fff3e0; color: #e65100; }
+			.btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; margin-right: 10px; }
+			.btn-blue { background: #1976d2; color: white; }
+			.btn-red { background: #f44336; color: white; }
+			pre { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 6px; font-size: 12px; overflow-x: auto; }
+			.highlight { background: #fff3e0; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #ff9800; margin: 15px 0; }
+			.highlight pre { margin: 8px 0 0 0; background: #2d2d2d; }
+			p { color: #666; line-height: 1.5; }
+		</style>
+	</head>
+	<body>
+		<div class="card">
+			<span class="badge">Shared MSAL</span>
+			<h1>SSO Test</h1>
+
+			<div id="status" class="status status-warning">
+				No session. Login via widget or click "Host Login".
+			</div>
+
+			<p>
+				<button class="btn btn-blue" onclick="hostLogin()">Host Login</button>
+				<button class="btn btn-red" onclick="hostLogout()">Logout</button>
+			</p>
+
+			<p><small>After "Host Login", refresh (F5) to see SSO - widget auto-logs in!</small></p>
+
+			<div class="highlight">
+				<strong>Embed (same as standalone!):</strong>
+				<pre>&lt;script src="chatbox.js" data-concierge-id="c0003726"&gt;&lt;/script&gt;</pre>
+			</div>
+
+			<p>Widget auto-detects <code>window.msalInstance</code> for SSO.</p>
+
+			<details>
+				<summary style="cursor: pointer; color: #1976d2;">View host app setup</summary>
+				<pre>
+// Host app initializes MSAL
+window.msalInstance = new msal.PublicClientApplication(config);
+await window.msalInstance.initialize();
+
+// That's it! Widget will auto-detect and use it for SSO</pre>
+			</details>
+		</div>
+
+		<script>
+			// === HOST APP CODE ===
+			// Initialize MSAL and expose globally for widget to detect
+			(async function initHostApp() {
+				window.msalInstance = new msal.PublicClientApplication({
+					auth: {
+						clientId: "447ff8a0-01d3-4192-a18a-90259989f917",
+						authority: "https://login.microsoftonline.com/f91d6d6a-1b50-467d-82d2-b94e92fba2d1",
+						redirectUri: window.location.origin,
+					},
+					cache: { cacheLocation: "localStorage" },
+				});
+				await window.msalInstance.initialize();
+
+				// Update status if already logged in
+				const accounts = window.msalInstance.getAllAccounts();
+				if (accounts.length > 0) {
+					document.getElementById("status").className = "status status-success";
+					document.getElementById("status").textContent = `SSO Active: ${accounts[0].username}`;
+				}
+			})();
+
+			async function hostLogin() {
+				const result = await window.msalInstance.loginPopup({ scopes: ["openid", "profile", "email"] });
+				document.getElementById("status").className = "status status-success";
+				document.getElementById("status").textContent = `Logged in: ${result.account.username}. Refresh to test SSO!`;
+				location.reload();
+			}
+
+			async function hostLogout() {
+				if (window.ChatBox) ChatBox.destroy();
+				await window.msalInstance.logoutPopup();
+				location.reload();
+			}
+		</script>
+
+		<!-- === EMBED CHATBOX - Simple 1 line! === -->
+		<script src="./chatbox.js" data-concierge-id="c0003726"></script>
+	</body>
+</html>
